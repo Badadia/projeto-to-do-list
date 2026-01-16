@@ -7,10 +7,13 @@ app.use(cors());
 app.use(bodyParser.json());
 
 let tarefas = [
-{ id: 1, titulo: "Estudar Android", descricao: "Ver aulas sobre Retrofit", prioridade: "Alta" },
-{ id: 2, titulo: "Fazer compras", descricao: "Comprar café", prioridade: "Média" }
+    { id: 1, titulo: "Estudar Python", descricao: "Ver aulas sobre Álgebra Linear e suas aplicações no código", prioridade: "Alta" },
+    { id: 2, titulo: "Fazer compras", descricao: "Comprar café, leite e pão", prioridade: "Média" },
+    { id: 3, titulo: "Limpar o quarto", descricao: "Organizar a mesa do computador", prioridade: "Baixa" },
+    { id: 4, titulo: "Pagar internet", descricao: "Vence dia 10", prioridade: "Alta" },
+    { id: 5, titulo: "Assistir série", descricao: "Terminar a temporada nova", prioridade: "Baixa" }
 ];
-let idContador = 3;
+let idContador = 6;
 
 app.post('/login', (req, res) => {
 const { usuario, senha } = req.body;
