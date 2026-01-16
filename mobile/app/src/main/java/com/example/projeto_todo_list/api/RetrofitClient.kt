@@ -1,6 +1,5 @@
 package com.example.projeto_todo_list.api
 
-import com.example.mobile.api.ApiService
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 

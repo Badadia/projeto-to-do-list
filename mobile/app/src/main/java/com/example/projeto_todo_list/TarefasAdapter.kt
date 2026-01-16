@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.projeto_todo_list.api.Tarefa
 import com.example.projeto_todo_list.databinding.ItemTarefaBinding
 
-class TarefasAdapter(private val listaTarefas: List<Tarefa>) :
+class TarefasAdapter(private val listaTarefas: List<Tarefa>, private val onClick: (Tarefa) -> Unit) :
     RecyclerView.Adapter<TarefasAdapter.TarefaViewHolder>() {
 
     inner class TarefaViewHolder(val binding: ItemTarefaBinding) :
@@ -26,6 +26,7 @@ class TarefasAdapter(private val listaTarefas: List<Tarefa>) :
         holder.binding.tvTitulo.text = tarefa.titulo
         holder.binding.tvDescricao.text = tarefa.descricao
         holder.binding.tvPrioridade.text = tarefa.prioridade
+        holder.itemView.setOnClickListener { onClick(tarefa) }
 
         when (tarefa.prioridade) {
             "Alta" -> holder.binding.tvPrioridade.setTextColor(Color.RED)

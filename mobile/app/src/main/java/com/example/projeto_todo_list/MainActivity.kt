@@ -1,5 +1,6 @@
 package com.example.projeto_todo_list
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -23,7 +24,8 @@ class MainActivity : AppCompatActivity() {
         binding.recyclerView.layoutManager = LinearLayoutManager(this)
 
         binding.fabAdicionar.setOnClickListener {
-            Toast.makeText(this, "cadastro", Toast.LENGTH_SHORT).show()
+            val intent = Intent(this, FormTarefaActivity::class.java)
+            startActivity(intent)
         }
     }
 
@@ -38,7 +40,14 @@ class MainActivity : AppCompatActivity() {
                 if (response.isSuccessful) {
                     val tarefas = response.body() ?: emptyList()
 
-                    val adapter = TarefasAdapter(tarefas)
+                    val adapter = TarefasAdapter(tarefas) { tarefaClicada ->
+                        val intent = Intent(this@MainActivity, FormTarefaActivity::class.java)
+                        intent.putExtra("id", tarefaClicada.id)
+                        intent.putExtra("titulo", tarefaClicada.titulo)
+                        intent.putExtra("descricao", tarefaClicada.descricao)
+                        intent.putExtra("prioridade", tarefaClicada.prioridade)
+                        startActivity(intent)
+                    }
                     binding.recyclerView.adapter = adapter
                 } else {
                     Toast.makeText(applicationContext, "Erro ao carregar tarefas", Toast.LENGTH_SHORT).show()
