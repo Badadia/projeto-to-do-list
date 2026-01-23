@@ -38,7 +38,15 @@ class MainActivity : AppCompatActivity() {
         RetrofitClient.api.getTarefas().enqueue(object : Callback<List<Tarefa>> {
             override fun onResponse(call: Call<List<Tarefa>>, response: Response<List<Tarefa>>) {
                 if (response.isSuccessful) {
-                    val tarefas = response.body() ?: emptyList()
+                    var tarefas = response.body() ?: emptyList()
+                    tarefas = tarefas.sortedByDescending { tarefa ->
+                        when (tarefa.prioridade) {
+                            "Alta" -> 3
+                            "Média" -> 2
+                            "Baixa" -> 1
+                            else -> 0
+                        }
+                    }
 
                     val adapter = TarefasAdapter(tarefas) { tarefaClicada ->
                         val intent = Intent(this@MainActivity, FormTarefaActivity::class.java)
@@ -50,7 +58,8 @@ class MainActivity : AppCompatActivity() {
                     }
                     binding.recyclerView.adapter = adapter
                 } else {
-                    Toast.makeText(applicationContext, "Erro ao carregar tarefas", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, "Erro ao carregar", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
 
