@@ -1,68 +1,98 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
+const express = require("express")
+const cors = require("cors")
+const bodyParser = require("body-parser")
+const { pool, initDb } = require("./db")
 
-const app = express();
-app.use(cors());
-app.use(bodyParser.json());
+const app = express()
+app.use(cors())
+app.use(bodyParser.json())
 
-let tarefas = [
-    { id: 1, titulo: "Estudar Python", descricao: "Ver aulas sobre Álgebra Linear e suas aplicações no código", prioridade: "Alta" },
-    { id: 2, titulo: "Fazer compras", descricao: "Comprar café, leite e pão", prioridade: "Média" },
-    { id: 3, titulo: "Limpar o quarto", descricao: "Organizar a mesa do computador", prioridade: "Baixa" },
-    { id: 4, titulo: "Pagar internet", descricao: "Vence dia 10", prioridade: "Alta" },
-    { id: 5, titulo: "Assistir série", descricao: "Terminar a temporada nova", prioridade: "Baixa" }
-];
-let idContador = 6;
+initDb()
 
-app.post('/login', (req, res) => {
-const { usuario, senha } = req.body;
-console.log(`Tentativa de login: ${usuario}`);
+app.post("/login", async (req, res) => {
+  const { usuario, senha } = req.body
 
-    if (usuario === 'aluno' && senha === '1234') {
-        res.json({ message: "Login realizado", token: "token_fake_123" });
+  try {
+    const query = "SELECT * FROM usuarios WHERE usuario = $1 AND senha = $2"
+    const values = [usuario, senha]
+
+    const resultado = await pool.query(query, values)
+
+    if (resultado.rows.length > 0) {
+      const userEncontrado = resultado.rows[0]
+      res.json({
+        message: "Login realizado",
+        token: "token_fake_123",
+        usuario: userEncontrado.usuario,
+      })
     } else {
-        res.status(401).json({ message: "Usuário ou senha incorretos" });
+      res.status(401).json({ message: "Usuário ou senha incorretos" })
     }
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Erro no servidor ao tentar logar" })
+  }
+})
 
-});
+app.get("/tarefas", async (req, res) => {
+  try {
+    const resultado = await pool.query("SELECT * FROM tarefas ORDER BY id ASC")
+    res.json(resultado.rows)
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Erro ao buscar tarefas" })
+  }
+})
 
-app.get('/tarefas', (req, res) => {
-res.json(tarefas);
-});
+app.post("/tarefas", async (req, res) => {
+  const { titulo, descricao, prioridade } = req.body
+  try {
+    const query =
+      "INSERT INTO tarefas (titulo, descricao, prioridade) VALUES ($1, $2, $3) RETURNING *"
+    const values = [titulo, descricao, prioridade]
 
-app.post('/tarefas', (req, res) => {
-const novaTarefa = req.body;
-if(!novaTarefa.titulo) {
-return res.status(400).json({message: "Titulo é obrigatório"});
-}
+    const resultado = await pool.query(query, values)
+    res.status(201).json(resultado.rows[0])
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Erro ao salvar tarefa" })
+  }
+})
 
-    novaTarefa.id = idContador++;
-    tarefas.push(novaTarefa);
-    res.status(201).json(novaTarefa);
+app.put("/tarefas/:id", async (req, res) => {
+  const { id } = req.params
+  const { titulo, descricao, prioridade } = req.body
+  try {
+    const query =
+      "UPDATE tarefas SET titulo = $1, descricao = $2, prioridade = $3 WHERE id = $4 RETURNING *"
+    const values = [titulo, descricao, prioridade, id]
 
-});
+    const resultado = await pool.query(query, values)
 
-app.put('/tarefas/:id', (req, res) => {
-const id = parseInt(req.params.id);
-const index = tarefas.findIndex(t => t.id === id);
-
-    if (index !== -1) {
-        tarefas[index] = { ...tarefas[index], ...req.body, id: id };
-        res.json(tarefas[index]);
+    if (resultado.rows.length > 0) {
+      res.json(resultado.rows[0])
     } else {
-        res.status(404).json({ message: "Tarefa não encontrada" });
+      res.status(404).json({ message: "Tarefa não encontrada" })
     }
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Erro ao atualizar" })
+  }
+})
 
-});
+app.delete("/tarefas/:id", async (req, res) => {
+  const { id } = req.params
+  try {
+    const query = "DELETE FROM tarefas WHERE id = $1"
+    await pool.query(query, [id])
+    res.status(204).send()
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ error: "Erro ao excluir" })
+  }
+})
 
-app.delete('/tarefas/:id', (req, res) => {
-const id = parseInt(req.params.id);
-tarefas = tarefas.filter(t => t.id !== id);
-res.status(204).send();
-});
-
-const PORT = 3000;
+const PORT = 3000
 app.listen(PORT, () => {
-console.log(`Servidor rodando! Acesse: http://localhost:${PORT}/tarefas`);
-});
+  console.log(`Servidor rodando com PostgreSQL na porta ${PORT}`)
+})
